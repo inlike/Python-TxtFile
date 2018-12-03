@@ -1,0 +1,102 @@
+可用教程：https://www.cnblogs.com/fnng/p/8358326.html
+
+思路：
+
+拉取镜像：
+docker pull selenium/hub
+docker pull selenium/node-chrome
+
+运行管理平台hub
+docker run -d -P --name selenium-hub selenium/hub
+
+启动node-chrome节点（需要多个节点则重复启动下面镜像）
+docker run -d --link selenium-hub:hub selenium/node-chrome
+
+测试脚本
+from selenium import webdriver
+from time import sleep
+
+driver = webdriver.Remote(
+command_executor='http://127.0.0.1:32768/wd/hub',
+desired_capabilities={'browserName': 'chrome'}
+)
+
+driver.get('https://www.baidu.com')
+print("get baidu")
+
+driver.find_element_by_id("kw").send_keys("docker selenium")
+driver.find_element_by_id("su").click()
+
+sleep(1)
+
+driver.get_screenshot_as_file("/home/fnngj/mypro/baidu_img.png")
+
+driver.quit()
+print("end...")
+
+
+
+注意问题：
+
+1. 外网访问docker 里的selenium 服务。
+设计的架构里，测试平台将调用对应的 selenium server 服务发起测试。但现在docker只能在Windows 服务器内访问，因此需要把对应的端口转发出去。
+步骤：
+
+1.1 把selenium docker镜像对应的 ip 192.168.99.100，端口为4444 的docker服务转发到本地（对应的局域网ip 为 172.16.100.1）：
+cmd 执行：
+netsh interface portproxy add v4tov4 listenport=4444 listenaddress=172.16.100.1 connectport=4444 connectaddress=192.168.99.100
+
+1.2 Windows 防火墙中添加端口4444 的对应转发规则（防火墙》高级设置 ，分别添加入站规则和出站规则）
+这样，局域网的服务器就可以通过 172.16.100.1:4444 调用selenium hub 的服务了。
+
+2. 窗口最大化失败
+在脚本中对浏览器进行最大化操作：
+driver.maximize_window()
+
+这个命令一向运行是没问题的，但是在docker 中却报错如下：
+Message: unknown error: failed to change window state to maximized, current state is normal
+
+查了一下，说是selenium 的bug。 找了一下，没有合适的解决方案，粗暴解决如下：
+
+try:
+    driver.maximize_window()
+except WebDriverException as e:
+    log.log().logger.info(e)
+    driver.set_window_size(1920, 1080)  #如果最大化失败，设置窗口大小为 1920*1080
+3. chrome option 不生效。
+因为部分用例需要模拟移动设备，或设置浏览器为英文，所以使用 chrome option进行设置。 原来的初始化脚本如下：
+
+desired_caps_web = webdriver.DesiredCapabilities.CHROME
+deviceList = ['Galaxy S5', 'Nexus 5X', 'Nexus 6P', 'iPhone 6', 'iPhone 6 Plus', 'iPad', 'iPad Pro']
+if devicename!='' :
+    if devicename not in deviceList:
+        devicename = deviceList[2]
+    chrome_option = {
+        'args': ['lang=en_US','start-maximized'],
+        'extensions': [], 'mobileEmulation': {'deviceName': ''}
+
+    }
+    chrome_option['mobileEmulation']['deviceName'] = devicename
+else:
+    chrome_option = {
+        'args': ['lang=en_US','--start-maximized'],
+        'extensions': []
+    }
+desired_caps_web['goog:chromeOptions']=chrome_option
+log.log().logger.info(desired_caps_web)
+driver = webdriver.remote.webdriver.WebDriver(command_executor=server_url,desired_capabilities=desired_caps_web)
+但同样，之前一直正常运行的脚本，到 docker 里不起作用。
+看下docker selenium node 节点的log ，发现打印了如下信息：
+
+Capabilities are: Capabilities {browserName: chrome, chromeOptions: {args: [lang=zh_CN.UTF-8],  mobileEmulation: {deviceName: iPhone 6}}, goog:chromeOptions: {}, javascriptEnabled: true, version: }
+多了个 goog:chromeOptions {} 的配置项是怎么回事？
+
+认真看下，Capabilities 里我设置的 chromeOptions 已经正确传进来了，但是后面的 goog:chromeOptions: {} 似乎覆盖了对应的配置。
+尝试下把脚本里的参数名称从 “chromeOptions ” 改为 “goog:chromeOptions” ，奇迹出现了：
+
+Capabilities are: Capabilities {browserName: chrome, goog:chromeOptions: {args: [lang=zh_CN.UTF-8], mobileEmulation: {deviceName: iPhone 6}}, javascriptEnabled: true, version: }
+脚本也能正常运行了，对应的浏览器语言、移动设备模拟设置也已生效！
+
+于是修改对应脚本为：
+
+desired_caps_web['goog:chromeOptions']=chrome_option

@@ -1,0 +1,54 @@
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
+chrome_options = Options()
+chrome_options.add_argument('window-size=1920x3000') #指定浏览器分辨率
+chrome_options.add_argument('--disable-gpu') #谷歌文档提到需要加上这个属性来规避bug
+chrome_options.add_argument('--hide-scrollbars') #隐藏滚动条, 应对一些特殊页面
+chrome_options.add_argument('blink-settings=imagesEnabled=false') #不加载图片, 提升速度
+chrome_options.add_argument('--headless') #浏览器不提供可视化页面. linux下如果系统不支持可视化不加这条会启动失败
+chrome_options.add_argument('--no-sandbox')#以最高权限运行
+chrome_options.binary_location = r"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe" #手动指定使用的浏览器位置
+driver=webdriver.Chrome(chrome_options=chrome_options)
+
+driver.page_source	#打印源代码
+driver.maximize_window()#最大化窗口
+#关闭浏览器
+browser.close()
+#关闭chreomedriver进程
+browser.quit()
+
+
+sreach_window=dr.current_window_handle	#重定向
+driver.window_handles	#	获取所有标签页句柄返回列表
+driver.switch_to_window(self.page_user)	#切换到指定标签页
+
+
+
+
+#超时设置
+driver.set_page_load_timeout(10)
+driver.set_script_timeout(10)#这两种设置都进行才有效
+try:
+	d.get(s)
+except:
+	print("超时报错")
+	self.driver.execute_script("window.stop()") #停止加载
+	driver.refresh()	#刷新当前页面
+注意：使用超时设置时会有异常抛出，要处理异常，否则程序容易奔溃，并且设置超时停止加载页面，在页面未加载出来时停止会出现程序奔溃，也需要做好相应的异常处理也就是说设置超时后再get要做异常处理，driver.refresh()也要做异常处理，driver.execute_script("window.stop()"也需要做异常处理。
+
+
+
+#设置指定页面出现
+该作用不是改变driver.get()的等待时间，而是在加载完成后对一些一部加载的页面在额外等待指定元素出现
+或者配合超时设置，设置get超时时间少，但是在指定页面位置设置等待时间
+使用方法：
+1.创建函数
+    def is_visible(self, locator, timeout=10):
+        try:
+            ui.WebDriverWait(self.driver, timeout).until(
+                EC.visibility_of_element_located((By.XPATH, locator)))
+            return True
+        except TimeoutException:
+            return False
+2.传入XPath表达式：is_visible(‘//div’) 如果在指定时间内出现元素则返回TRUE 如果超时则返回false
+

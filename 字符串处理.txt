@@ -1,0 +1,5 @@
+合并列表项为字符串''.join(list)
+
+去除首尾的空白字符	string.strip()
+
+替换字符串中的指定字符	string.replace('被替换', '替换')
