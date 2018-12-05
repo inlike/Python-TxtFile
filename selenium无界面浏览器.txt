@@ -17,6 +17,9 @@ browser.close()
 #关闭chreomedriver进程
 browser.quit()
 
+self.selenium.driver.window_handles
+
+
 
 sreach_window=dr.current_window_handle	#重定向
 driver.window_handles	#	获取所有标签页句柄返回列表

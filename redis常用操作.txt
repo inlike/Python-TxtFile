@@ -2,4 +2,4 @@ from scrapy_redis import get_redis
 redis_client = get_redis(url='redis://auth:d2fd44545c6ce88e4285bd8924a5c9e8@111.230.12.20:6379')
 v = redis_client.sismember('linkedin_spider:PartnerName', PartnerName) #判断元素是否在集合中返回FALSE或者TRUE
 redis_client.lpush('linkedin_spider:items', json.dumps(items))   #添加列表元素
-redis_client.sadd('linkedin_spider:PartnerName', PartnerName)  # 添加集合元素
+redis_client.sadd('linkedin_spider:PartnerName', P
