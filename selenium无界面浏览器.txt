@@ -55,3 +55,9 @@ except:
             return False
 2.传入XPath表达式：is_visible(‘//div’) 如果在指定时间内出现元素则返回TRUE 如果超时则返回false
 
+设置代理
+chrome_options = Options()
+chrome_options.add_argument('--disable-gpu')  # 谷歌文档提到需要加上这个属性来规避bug
+chrome_options.add_argument(
+        "--proxy-server=http://proxy-a90bb059e551babb.elb.us-east-2.amazonaws.com:3134")   # 设置代理
+
