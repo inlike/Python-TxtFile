@@ -1,0 +1,4 @@
+find / -name filename 查找文件
+fuser -k 9090/tcp 结束某端口协议上的所有进程
+ps -ef | grep nginx 根据进程名查找进程号
+lsof -i :8041 查找某端口上的进程
